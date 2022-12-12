@@ -1,6 +1,6 @@
 # pineda_flutter
 
-A new Flutter project.
+A new Flutter project. This project implements signup.
 
 ## Getting Started
 
