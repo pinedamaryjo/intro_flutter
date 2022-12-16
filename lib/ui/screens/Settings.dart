@@ -1,8 +1,9 @@
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pineda_flutter/pages/Login.dart';
 import 'package:pineda_flutter/Constants.dart';
-
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Settings extends StatefulWidget {
   static const String routeName = 'Settings';
@@ -12,7 +13,7 @@ class Settings extends StatefulWidget {
 }
 
 class SettingsState extends State<Settings> {
-  
+  final storage = new FlutterSecureStorage();
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +67,12 @@ class SettingsState extends State<Settings> {
 
 
 void navToLogin(BuildContext context) {
-    Navigator.pushNamed(context, Login.routeName);
+    FirebaseAuth.instance.signOut().then((val) async {
+      print("Succesfully signed out");
+      await storage.deleteAll();
+      Navigator.pushNamed(context, Login.routeName);
+    });
+    
   }
 
 

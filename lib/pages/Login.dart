@@ -1,5 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pineda_flutter/mixins/ValidationMixin.dart';
-import 'package:pineda_flutter/pages/Dashboard.dart';
 import 'package:pineda_flutter/pages/Registration.dart';
 import 'package:flutter/material.dart';
 import 'package:pineda_flutter/widgets/CustomTextField.dart';
@@ -7,9 +7,9 @@ import 'package:pineda_flutter/widgets/PasswordField.dart';
 import 'package:pineda_flutter/widgets/PrimaryBtn.dart';
 import 'package:pineda_flutter/widgets/SecondaryBtn.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:pineda_flutter/ui/root_page.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Login extends StatefulWidget {
   static const String routeName = 'Login';
@@ -18,11 +18,38 @@ class Login extends StatefulWidget {
   _LoginState createState() => _LoginState();
 }
 
-class _LoginState extends State<Login> with ValidationMixin {
+class _LoginState extends State<Login> with ValidationMixin, WidgetsBindingObserver{
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      FlutterSecureStorage().read(key: "token").then((value) {
+        if (value != null) {
+          Navigator.pushReplacement(
+          context,
+          PageTransition(
+              child: RootPage(emailController.text),
+              type: PageTransitionType.bottomToTop));
+        }
+      });
+    }
+  }
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool obscureText = true;
+  final storage = new FlutterSecureStorage();
   
   @override
   Widget build(BuildContext context) {
@@ -88,7 +115,7 @@ class _LoginState extends State<Login> with ValidationMixin {
                       text: "Login", 
                       icon: Icons.login, 
                       onPress: () {
-                        navToRootPage(context);
+                        login(context);
                       }
                     ),
                     SizedBox(height: 20.0),
@@ -113,9 +140,18 @@ class _LoginState extends State<Login> with ValidationMixin {
     );
   }
 
-  void login() {
+  void login(BuildContext context) async {
     if(formKey.currentState.validate()) {
-      Navigator.pushNamed(context, Dashboard.routeName);
+      FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: emailController.text, password: passwordController.text)
+        .then((val) async {
+          String token = await FirebaseAuth.instance.currentUser.getIdToken();
+          print(token);
+          await storage.write(key: 'token', value: token);
+          navToRootPage(context);
+        }).onError((error, stackTrace) {
+          print("Error ${error.toString()}");
+        });
     }
   }
   

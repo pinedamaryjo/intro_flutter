@@ -4,7 +4,7 @@ import 'package:pineda_flutter/widgets/PasswordField.dart';
 import 'package:pineda_flutter/widgets/PrimaryBtn.dart';
 import 'package:flutter/material.dart';
 import 'package:pineda_flutter/mixins/ValidationMixin.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 
 
 class Registration extends StatefulWidget {
@@ -147,7 +147,15 @@ class _RegistrationState extends State<Registration> with ValidationMixin {
 
   void register() {
     if(formKey.currentState.validate()) {
-      Navigator.pushNamed(context, Login.routeName);
+        FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: emailController.text, password: pwdController.text)
+        .then((val) {
+          print("Successfully created acount");
+          Navigator.pushNamed(context, Login.routeName);
+        }).onError((error, stackTrace) {
+          print("Error ${error.toString()}");
+        });
+      
     }
   }
 
